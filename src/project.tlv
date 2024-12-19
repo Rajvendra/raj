@@ -1,25 +1,8 @@
 \m5_TLV_version 1d: tl-x.org
 \m5
    use(m5-1.0)
-   
-
-   // #################################################################
-   // #                                                               #
-   // #  Starting-Point Code for MEST Course Tiny Tapeout Calculator  #
-   // #                                                               #
-   // #################################################################
-   
-   // ========
-   // Settings
-   // ========
-   
-   //-------------------------------------------------------
-   // Build Target Configuration
-   //
    var(my_design, tt_um_example)   /// The name of your top-level TT module, to match your info.yml.
    var(target, ASIC)   /// Note, the FPGA CI flow will set this to FPGA.
-   //-------------------------------------------------------
-   
    var(in_fpga, 1)   /// 1 to include the demo board. (Note: Logic will be under /fpga_pins/fpga.)
    var(debounce_inputs, 0)
                      /// Legal values:
@@ -58,7 +41,7 @@
                      $op[1:0] == 2'b10 
                         ? $inp1[3:0] * $inp2[3:0] :
                           $inp1[3:0] / $inp2[3:0] ;
-         /*
+         
          *uo_out =  $out == 4'h0 ? 8'b00111111 :
                     $out == 4'h1 ? 8'b00000110 :
                     $out == 4'h2 ? 8'b01011011 :
@@ -75,7 +58,7 @@
                     $out == 4'hd ? 8'b01011110 :
                     $out == 4'he ? 8'b01111011 :
                     8'b01110001 ;
-         */
+         
       
       
       
@@ -87,7 +70,7 @@
    m5+cal_viz(@1, m5_if(m5_in_fpga, /fpga, /top))
    
    // Connect Tiny Tapeout outputs. Note that uio_ outputs are not available in the Tiny-Tapeout-3-based FPGA boards.
-   //*uo_out = 8'b0;
+   *uo_out = 8'b0;
    m5_if_neq(m5_target, FPGA, ['*uio_out = 8'b0;'])
    m5_if_neq(m5_target, FPGA, ['*uio_oe = 8'b0;'])
 
@@ -140,7 +123,7 @@ module m5_user_module_name (
     input  wire       rst_n     // reset_n - low to reset
 );
    wire reset = ! rst_n;
-   assign uo_out = 8'b10101010;
+   //assign uo_out = 8'b10101010;
 
 \TLV tt_lab()
    // Connect Tiny Tapeout I/Os to Virtual FPGA Lab.
