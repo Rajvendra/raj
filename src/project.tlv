@@ -57,10 +57,8 @@
                         ? $inp1[3:0] - $inp2[3:0] :
                      $op[1:0] == 2'b10 
                         ? $inp1[3:0] * $inp2[3:0] :
-                     $op[1:0] == 2'b11 
-                        ? $inp1[3:0] / $inp2[3:0] :
-                        4'b0;
-
+                          $inp1[3:0] / $inp2[3:0] ;
+         /*
          *uo_out =  $out == 4'h0 ? 8'b00111111 :
                     $out == 4'h1 ? 8'b00000110 :
                     $out == 4'h2 ? 8'b01011011 :
@@ -77,6 +75,7 @@
                     $out == 4'hd ? 8'b01011110 :
                     $out == 4'he ? 8'b01111011 :
                     8'b01110001 ;
+         */
       
       
       
@@ -88,7 +87,7 @@
    m5+cal_viz(@1, m5_if(m5_in_fpga, /fpga, /top))
    
    // Connect Tiny Tapeout outputs. Note that uio_ outputs are not available in the Tiny-Tapeout-3-based FPGA boards.
-   //*uo_out = 8'b0;
+   *uo_out = 8'b0;
    m5_if_neq(m5_target, FPGA, ['*uio_out = 8'b0;'])
    m5_if_neq(m5_target, FPGA, ['*uio_oe = 8'b0;'])
 
@@ -141,6 +140,7 @@ module m5_user_module_name (
     input  wire       rst_n     // reset_n - low to reset
 );
    wire reset = ! rst_n;
+   assign uo_out = 8'b10101010;
 
 \TLV tt_lab()
    // Connect Tiny Tapeout I/Os to Virtual FPGA Lab.
