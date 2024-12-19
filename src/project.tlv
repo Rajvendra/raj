@@ -1,25 +1,8 @@
 \m5_TLV_version 1d: tl-x.org
 \m5
    use(m5-1.0)
-   
-
-   // #################################################################
-   // #                                                               #
-   // #  Starting-Point Code for MEST Course Tiny Tapeout Calculator  #
-   // #                                                               #
-   // #################################################################
-   
-   // ========
-   // Settings
-   // ========
-   
-   //-------------------------------------------------------
-   // Build Target Configuration
-   //
    var(my_design, tt_um_example)   /// The name of your top-level TT module, to match your info.yml.
    var(target, ASIC)   /// Note, the FPGA CI flow will set this to FPGA.
-   //-------------------------------------------------------
-   
    var(in_fpga, 1)   /// 1 to include the demo board. (Note: Logic will be under /fpga_pins/fpga.)
    var(debounce_inputs, 0)
                      /// Legal values:
@@ -42,60 +25,48 @@
    m4_include_lib(https:/['']/raw.githubusercontent.com/efabless/chipcraft---mest-course/main/tlv_lib/calculator_shell_lib.tlv)
 
 \TLV calc()
-   
-   |calc
+   |pipe
       @0
          $reset = *reset;
+      @1   
+         $inp1[3:0] = {1'b0, *ui_in[2:0]};
+         $inp2[3:0] = {1'b0, *ui_in[5:3]};
+         $op[1:0] = *ui_in[7:6];
+      @2
+         $out[3:0] = $reset ? 4'b0 :
+                     $op[1:0] == 2'b00 
+                        ? $inp1[3:0] + $inp2[3:0] :
+                     $op[1:0] == 2'b01 
+                        ? $inp1[3:0] - $inp2[3:0] :
+                     $op[1:0] == 2'b10 
+                        ? $inp1[3:0] * $inp2[3:0] :
+                          $inp1[3:0] / $inp2[3:0] ;
          
-         // Board's switch inputs
-         $op[1:0] = *ui_in[5:4];
-         $val2[7:0] = {4'b0, *ui_in[3:0]};
-         $equals_in = *ui_in[7];
+         *uo_out =  $out == 4'h0 ? 8'b00111111 :
+                    $out == 4'h1 ? 8'b00000110 :
+                    $out == 4'h2 ? 8'b01011011 :
+                    $out == 4'h3 ? 8'b01001111 :
+                    $out == 4'h4 ? 8'b01100110 :
+                    $out == 4'h5 ? 8'b00101101 :
+                    $out == 4'h6 ? 8'b01111101 :
+                    $out == 4'h7 ? 8'b00000111 :
+                    $out == 4'h8 ? 8'b01111111 :
+                    $out == 4'h9 ? 8'b01101111 :
+                    $out == 4'ha ? 8'b01110111 :
+                    $out == 4'hb ? 8'b01111100 :
+                    $out == 4'hc ? 8'b00111001 :
+                    $out == 4'hd ? 8'b01011110 :
+                    $out == 4'he ? 8'b01111011 :
+                    8'b01110001 ;
          
-      @1
-         // Calculator result value ($out) becomes first operand ($val1).
-         $val1[7:0] = >>1$out;
-         
-         // Perform a valid computation when "=" button is pressed.
-         $valid = $reset ? 1'b0 :
-                           $equals_in && ! >>1$equals_in;
-         
-         // Calculate (all possible operations).
-         $sum[7:0] = $val1 + $val2;
-         $diff[7:0] = $val1 - $val2;
-         $prod[7:0] = $val1 * $val2;
-         $quot[7:0] = $val1 / $val2;
-         
-         // Select the result value, resetting to 0, and retaining if no calculation.
-         $out[7:0] = $reset ? 8'b0 :
-                     ! $valid ? >>1$out :
-                     ($op[1:0] == 2'b00) ? $sum  :
-                     ($op[1:0] == 2'b01) ? $diff :
-                     ($op[1:0] == 2'b10) ? $prod :
-                                           $quot;
-         
-      @3
-         // Display lower hex digit on 7-segment display.
-         $digit[3:0] = $out[3:0];
-         *uo_out =
-            $digit == 4'h0 ? 8'b00111111 :
-            $digit == 4'h1 ? 8'b00000110 :
-            $digit == 4'h2 ? 8'b01011011 :
-            $digit == 4'h3 ? 8'b01001111 :
-            $digit == 4'h4 ? 8'b01100110 :
-            $digit == 4'h5 ? 8'b01101101 :
-            $digit == 4'h6 ? 8'b01111101 :
-            $digit == 4'h7 ? 8'b00000111 :
-            $digit == 4'h8 ? 8'b01111111 :
-            $digit == 4'h9 ? 8'b01101111 :
-            $digit == 4'hA ? 8'b01110111 :
-            $digit == 4'hB ? 8'b01111100 :
-            $digit == 4'hC ? 8'b00111001 :
-            $digit == 4'hD ? 8'b01011110 :
-            $digit == 4'hE ? 8'b01111001 :
-                             8'b01110001;
-         
-         
+      
+      
+      
+   
+   // Note that pipesignals assigned here can be found under /fpga_pins/fpga.
+   
+   
+
    m5+cal_viz(@1, m5_if(m5_in_fpga, /fpga, /top))
    
    // Connect Tiny Tapeout outputs. Note that uio_ outputs are not available in the Tiny-Tapeout-3-based FPGA boards.
@@ -114,7 +85,7 @@ module top(input logic clk, input logic reset, input logic [31:0] cyc_cnt, outpu
    // Tiny tapeout I/O signals.
    logic [7:0] ui_in, uo_out;
    m5_if_neq(m5_target, FPGA, ['logic [7:0] uio_in, uio_out, uio_oe;'])
-   logic [31:0] r;  // a random value
+   logic [31:0] r;
    always @(posedge clk) r <= m5_if_defined_as(MAKERCHIP, 1, ['$urandom()'], ['0']);
    assign ui_in = r[7:0];
    m5_if_neq(m5_target, FPGA, ['assign uio_in = 8'b0;'])
@@ -152,6 +123,7 @@ module m5_user_module_name (
     input  wire       rst_n     // reset_n - low to reset
 );
    wire reset = ! rst_n;
+   //assign uo_out = 8'b10101010;
 
 \TLV tt_lab()
    // Connect Tiny Tapeout I/Os to Virtual FPGA Lab.
